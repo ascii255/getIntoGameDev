@@ -10,7 +10,7 @@ class App:
         #initialise opengl
         glClearColor(0.1, 0.2, 0.2, 1)
         self.mainLoop()
-    
+
     def mainLoop(self):
         running = True
         while (running):
@@ -27,7 +27,7 @@ class App:
             framerate = int(self.clock.get_fps())
             pg.display.set_caption(f"Running at {framerate} fps.")
         self.quit()
-    
+
     def quit(self):
         pg.quit()
 
