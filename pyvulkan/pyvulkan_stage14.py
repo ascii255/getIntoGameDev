@@ -152,9 +152,9 @@ class App:
         self.vertices = [
              0.0, -0.5, 1.0, 0.0, 0.0,
              0.5,  0.5, 0.0, 1.0, 0.0,
-            -0.5,  0.5, 0.0, 0.0, 1.0
+            -0.5,  0.5, 0.0, 1.0, 1.0
         ]
-        self.vertexCount = len(self.vertices)
+        self.vertexCount = 3
         self.vertices = np.array(self.vertices, dtype=np.float32)
         self.bindingDescription = VkVertexInputBindingDescription(
             binding=0,
