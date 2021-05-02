@@ -1,0 +1,38 @@
+#version 330 core
+#extension GL_ARB_separate_shader_objects : enable
+
+layout (location=0) in vec3 fragmentPos;
+layout (location=1) in vec2 fragmentTexCoord;
+layout (location=2) in vec3 fragmentNormal;
+
+uniform sampler2D imageTexture;
+uniform vec3 ambient;
+uniform vec3 lightPos;
+uniform vec3 lightCol;
+uniform vec3 cameraPos;
+
+layout (location=0) out vec4 colour;
+
+void main()
+{
+    //directions
+    vec3 norm = normalize(fragmentNormal);
+	vec3 lightDir = normalize(lightPos - fragmentPos);
+    vec3 viewDir = normalize(cameraPos - fragmentPos);
+    vec3 reflectedDir = reflect(-lightDir, norm);
+
+    //calculate lighting
+    vec3 lightLevel = vec3(0.0);
+    
+    //ambient
+    lightLevel += ambient;
+
+    //diffuse
+	lightLevel += lightCol * max(0.0,dot(norm,lightDir));
+	
+    //specular
+    lightLevel += lightCol * 2.0 * pow(max(dot(viewDir, reflectedDir), 0.0),32);
+
+    //return pixel colour
+	colour = vec4(lightLevel,1.0) * texture(imageTexture,fragmentTexCoord);
+}
