@@ -30,7 +30,6 @@ class App:
 
         glUseProgram(self.shaderBasic)
 
-        projection_transform = pyrr.matrix44.create_perspective_projection(45, 640/480, 0.1, 10, dtype=np.float32)
         glUniformMatrix4fv(glGetUniformLocation(self.shaderBasic,"projection"),1,GL_FALSE,projection_transform)
         
         glEnable(GL_DEPTH_TEST)
@@ -271,6 +270,8 @@ class Light:
         angle = np.radians((80*(pg.time.get_ticks()/1000))%360)
         self.position[1] = 1 + np.cos(angle)
         self.position[2] = 1.5 + np.sin(angle)
+        self.colour[1] = abs(np.cos(angle))
+        self.colour[2] = abs(np.sin(angle))
         glUseProgram(self.shader)
         glUniform3fv(glGetUniformLocation(self.shader,"lightPos"),1,self.position)
         glUniform3fv(glGetUniformLocation(self.shader,"lightCol"),1,self.colour)
