@@ -9,6 +9,8 @@ import glfw.GLFW as constants
 import cffi
 import ctypes
 import numpy as np
+import pyrr
+from struct import *
 
 """
     Declare whether to run in debug mode,
@@ -118,6 +120,8 @@ class App:
         self.vertexBufferMemory = None
         self.uniformBuffers = []
         self.uniformBufferMemories = []
+        self.descriptorPool = None
+        self.descriptorSets = []
 
         self.initWindow()
         self.initVulkan()
@@ -148,6 +152,8 @@ class App:
         self.createGraphicsPipeline()
         self.createFrameBuffers()
         self.createUniformBuffers()
+        self.createDescriptorPool()
+        self.createDescriptorSets()
         self.createCommandPool()
         self.createVertexBuffer()
         self.createCommandBuffers()
@@ -247,6 +253,31 @@ class App:
             self.lastTime = self.currentTime
 
         self.numFrames += 1
+
+    def updateUniformBuffer(self, imageIndex):
+        time = glfw.get_time()
+        angle = np.radians(40*time)
+        modelMatrix = pyrr.matrix44.create_identity(dtype=np.float32)
+        modelMatrix = pyrr.matrix44.multiply(modelMatrix, pyrr.matrix44.create_from_z_rotation(angle,dtype=np.float32))
+
+        position = np.array([2, 2, 2],dtype=np.float32)
+        target = np.array([0, 0, 0],dtype=np.float32)
+        up = np.array([0, 0, 1],dtype=np.float32)
+        viewMatrix = pyrr.matrix44.create_look_at(position, target, up, dtype=np.float32)
+
+        fov = 45
+        aspect = self.swapchainExtent.width/float(self.swapchainExtent.height)
+        near = 0.1
+        far = 10
+        projectionMatrix = pyrr.matrix44.create_perspective_projection(fov, aspect, near, far, dtype=np.float32)
+
+        ubo = modelMatrix.astype("f").tobytes() + viewMatrix.astype("f").tobytes() + projectionMatrix.astype("f").tobytes()
+        
+        size = 3 * 4 * 4 * 4
+        #handle_to_memory = vkMapMemory(device, location, offset, size, flags)
+        data = vkMapMemory(self.device, self.uniformBufferMemories[imageIndex], 0, size, 0)
+        ffi.memmove(data, ubo, size)
+        vkUnmapMemory(self.device, self.uniformBufferMemories[imageIndex])
 
     def exit(self):
         vkDestroySurfaceKHR = vkGetInstanceProcAddr(self.instance, "vkDestroySurfaceKHR")
@@ -532,6 +563,8 @@ class App:
         self.createGraphicsPipeline()
         self.createFrameBuffers()
         self.createUniformBuffers()
+        self.createDescriptorPool()
+        self.createDescriptorSets()
         self.createCommandBuffers()
         self.inFlightImages = []
         for image in self.swapchainImages:
@@ -567,6 +600,7 @@ class App:
             vkFreeMemory(self.device, self.uniformBufferMemories[i], None)
         self.uniformBuffers = []
         self.uniformBufferMemories = []
+        vkDestroyDescriptorPool(self.device, self.descriptorPool, None)
 
     def createImageViews(self):
         #configure an image view for each image on the swapchain.
@@ -789,6 +823,53 @@ class App:
             )
             return vkCreateShaderModule(self.device, createInfo, None)
 
+    def createDescriptorPool(self):
+        poolSize = VkDescriptorPoolSize(
+            type=VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            descriptorCount=len(self.swapchainImages)
+        )
+
+        poolInfo = VkDescriptorPoolCreateInfo(
+            sType=VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            poolSizeCount=1,
+            pPoolSizes=poolSize,
+            maxSets=len(self.swapchainImages)
+        )
+
+        self.descriptorPool = vkCreateDescriptorPool(self.device, poolInfo, None)
+
+    def createDescriptorSets(self):
+        layouts = []
+        for i in range(len(self.swapchainImages)):
+            layouts.append(self.descriptorSetLayout)
+        
+        allocInfo = VkDescriptorSetAllocateInfo(
+            sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            descriptorPool=self.descriptorPool,
+            descriptorSetCount=len(self.swapchainImages),
+            pSetLayouts=layouts
+        )
+        self.descriptorSets = vkAllocateDescriptorSets(self.device, allocInfo)
+        
+        for i in range(len(self.swapchainImages)):
+            bufferInfo = VkDescriptorBufferInfo(
+                buffer=self.uniformBuffers[i],
+                offset=0,
+                range=3 * 4 * 4 * 4 #no of bytes covered by descriptor (size of ubo)
+            )
+
+            descriptorWrite = VkWriteDescriptorSet(
+                sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                dstSet=self.descriptorSets[i],
+                dstBinding=0,
+                dstArrayElement=0,
+                descriptorType=VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                descriptorCount=1,
+                pBufferInfo=bufferInfo
+            )
+            #write descriptor, copy descriptor
+            vkUpdateDescriptorSets(self.device, 1, descriptorWrite, 0, None)
+
 ####### Buffers #################################
 
     def createFrameBuffers(self):
@@ -949,6 +1030,12 @@ class App:
 
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, self.graphicsPipeline)
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, [self.vertexBuffer,], [0,])
+
+            vkCmdBindDescriptorSets(
+                commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                self.pipelineLayout, 0, #first set
+                1, #descriptor count
+                [self.descriptorSets[i],], 0, None)
             #vkCmdDraw(commandBuffer, vertex count, instance count, first vertex, first instance)
             vkCmdDraw(commandBuffer, self.vertexCount, 1, 0, 0)
 
@@ -985,6 +1072,8 @@ class App:
         if (self.inFlightImages[imageIndex] != VK_NULL_HANDLE):
             vkWaitForFences(self.device, 1, [self.inFlightImages[imageIndex],], VK_TRUE, 18446744073709551615)
         self.inFlightImages[self.currentFrame] = self.inFlightFences[self.currentFrame]
+
+        self.updateUniformBuffer(imageIndex)
 
         submitInfo = VkSubmitInfo(
             sType=VK_STRUCTURE_TYPE_SUBMIT_INFO,
