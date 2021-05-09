@@ -22,6 +22,8 @@ class App:
         self.shaderBasic = self.createShader("shaders/simple_3d_vertex.txt", "shaders/simple_3d_fragment.txt")
         glUseProgram(self.shader)
         self.resetLights()
+        glEnable(GL_CULL_FACE)
+        glCullFace(GL_BACK)
 
         projection_transform = pyrr.matrix44.create_perspective_projection(45, 640/480, 0.1, 10, dtype=np.float32)
         glUniformMatrix4fv(glGetUniformLocation(self.shader,"projection"),1,GL_FALSE,projection_transform)
@@ -38,7 +40,7 @@ class App:
         glEnable(GL_DEPTH_TEST)
 
         self.wood_texture = Material("gfx/crate")
-        self.monkey_model = ObjModel("models", "monkey.obj", self.shader, self.wood_texture)
+        self.monkey_model = ObjModel("models", "monkey_hd.obj", self.shader, self.wood_texture)
         self.monkey = Monkey(np.array([0,0,0],dtype=np.float32), self.monkey_model)
         self.cube = Cube(self.shader, self.wood_texture,[1,1,0.5])
         self.player = Player([0,0,1.2])
@@ -451,21 +453,11 @@ class ObjModel:
                     # obj file uses triangle fan format for each face individually.
                     # unpack each face
                     triangles_in_face = len(line) - 2
-
                     vertex_order = []
                     for i in range(triangles_in_face):
                         vertex_order.append(0)
                         vertex_order.append(i+1)
                         vertex_order.append(i+2)
-                    """
-                    for i in vertex_order:
-                        for x in theseVertices[i]:
-                            self.vertices.append(x)
-                        for x in theseNormals[i]:
-                            self.vertices.append(x)
-                        for x in theseTextures[i]:
-                            self.vertices.append(x)
-                    """
                     for i in vertex_order:
                         for x in theseVertices[i]:
                             self.vertices.append(x)
