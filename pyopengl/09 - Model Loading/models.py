@@ -40,8 +40,8 @@ class App:
         glEnable(GL_DEPTH_TEST)
 
         self.wood_texture = Material("gfx/crate")
-        self.monkey_model = ObjModel("models", "monkey_hd.obj", self.shader, self.wood_texture)
-        self.monkey = Monkey(np.array([0,0,0],dtype=np.float32), self.monkey_model)
+        monkey_model = ObjModel("models", "monkey.obj", self.shader, self.wood_texture)
+        self.monkey = Monkey(np.array([0,0,0],dtype=np.float32), monkey_model)
         self.cube = Cube(self.shader, self.wood_texture,[1,1,0.5])
         self.player = Player([0,0,1.2])
         self.light = Light([self.shaderBasic, self.shader], [0.2, 0.7, 0.8], [1,1.7,1.5], 2, self.lightCount)
@@ -128,6 +128,11 @@ class App:
         self.numFrames += 1
 
     def quit(self):
+        self.wood_texture.destroy()
+        self.monkey.destroy()
+        self.cube.destroy()
+        self.light.destroy()
+        self.light2.destroy()
         self.cube.destroy()
         glDeleteProgram(self.shader)
         pg.quit()
@@ -221,9 +226,8 @@ class Cube:
         glDrawArrays(GL_TRIANGLES, 0, self.vertex_count)
 
     def destroy(self):
-        #glDeleteVertexArrays(1, self.vao)
-        #glDeleteBuffers(1,self.vbo)
-        pass
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1, (self.vbo,))
 
 class Material:
     def __init__(self, filepath):
@@ -256,6 +260,9 @@ class Material:
         glBindTexture(GL_TEXTURE_2D,self.diffuseTexture)
         glActiveTexture(GL_TEXTURE1)
         glBindTexture(GL_TEXTURE_2D,self.specularTexture)
+
+    def destroy(self):
+        glDeleteTextures(2, (self.diffuseTexture, self.specularTexture))
 
 class Player:
     def __init__(self, position):
@@ -300,6 +307,9 @@ class Monkey:
     def draw(self):
         self.model.draw(self.position)
 
+    def destroy(self):
+        self.model.destroy()
+
 class Light:
     def __init__(self, shaders, colour, position, strength, index):
         self.model = CubeBasic(shaders[0], 0.1, 0.1, 0.1, colour[0], colour[1], colour[2])
@@ -318,6 +328,9 @@ class Light:
 
     def draw(self):
         self.model.draw(self.position)
+
+    def destroy(self):
+        self.model.destroy()
 
 class CubeBasic:
     def __init__(self, shader, l, w, h, r, g, b):
@@ -396,8 +409,12 @@ class CubeBasic:
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, self.vertex_count)
 
+    def destroy(self):
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1, (self.vbo,))
+
 class ObjModel:
-    def __init__(self,folderpath,filename, shader, material):
+    def __init__(self, folderpath, filename, shader, material):
         self.shader = shader
         self.material = material
         glUseProgram(shader)
@@ -453,6 +470,7 @@ class ObjModel:
                     # obj file uses triangle fan format for each face individually.
                     # unpack each face
                     triangles_in_face = len(line) - 2
+
                     vertex_order = []
                     for i in range(triangles_in_face):
                         vertex_order.append(0)
@@ -483,10 +501,13 @@ class ObjModel:
         glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(0))
         #normal attribute
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(12))
+        glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(12))
         #texture attribute
         glEnableVertexAttribArray(2)
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(24))
+        glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(20))
+
+    def getVertices(self):
+        return self.vertices
 
     def draw(self, position):
         glUseProgram(self.shader)
@@ -495,5 +516,9 @@ class ObjModel:
         glUniformMatrix4fv(glGetUniformLocation(self.shader,"model"),1,GL_FALSE,model_transform)
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES,0,self.vertexCount)
+    
+    def destroy(self):
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1, (self.vbo,))
 
 myApp = App()

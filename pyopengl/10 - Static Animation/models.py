@@ -50,6 +50,9 @@ class Monkey:
     def draw(self):
         self.model.draw(self.position)
 
+    def destroy(self):
+        self.model.destroy()
+
 class Light:
     def __init__(self, shaders, colour, position, strength, index):
         self.model = CubeBasic(shaders[0], 0.1, 0.1, 0.1, colour[0], colour[1], colour[2])
@@ -69,6 +72,9 @@ class Light:
     def draw(self):
         self.model.draw(self.position)
 
+    def destroy(self):
+        self.model.destroy()
+
 class Spring:
     def __init__(self, position, animatedModel):
         self.model = animatedModel
@@ -79,6 +85,9 @@ class Spring:
 
     def draw(self):
         self.model.draw(self.position)
+
+    def destroy(self):
+        self.model.destroy()
 
 ############################# View ############################################
 
@@ -113,6 +122,9 @@ class Material:
         glBindTexture(GL_TEXTURE_2D,self.diffuseTexture)
         glActiveTexture(GL_TEXTURE1)
         glBindTexture(GL_TEXTURE_2D,self.specularTexture)
+    
+    def destroy(self):
+        glDeleteTextures(2, (self.diffuseTexture, self.specularTexture))
 
 class CubeBasic:
     def __init__(self, shader, l, w, h, r, g, b):
@@ -190,6 +202,10 @@ class CubeBasic:
         glUniformMatrix4fv(glGetUniformLocation(self.shader,"model"),1,GL_FALSE,model_transform)
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, self.vertex_count)
+
+    def destroy(self):
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1, (self.vbo,))
 
 class ObjModel:
     def __init__(self,folderpath,filename, shader, material):
@@ -279,10 +295,10 @@ class ObjModel:
         glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(0))
         #normal attribute
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(12))
+        glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(12))
         #texture attribute
         glEnableVertexAttribArray(2)
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(24))
+        glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(20))
 
     def getVertices(self):
         return self.vertices
@@ -294,6 +310,10 @@ class ObjModel:
         glUniformMatrix4fv(glGetUniformLocation(self.shader,"model"),1,GL_FALSE,model_transform)
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES,0,self.vertexCount)
+    
+    def destroy(self):
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1, (self.vbo,))
 
 class AnimatedModel:
     def __init__(self, shader, frames, models, material):
@@ -319,10 +339,10 @@ class AnimatedModel:
         glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(0))
         #normal attribute
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(12))
+        glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(12))
         #texture attribute
         glEnableVertexAttribArray(2)
-        glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(24))
+        glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,self.vertices.itemsize*8,ctypes.c_void_p(20))
 
     def update(self, frametime):
         self.frame += frametime / 1000.0
@@ -359,6 +379,10 @@ class AnimatedModel:
         glUniformMatrix4fv(glGetUniformLocation(self.shader,"model"),1,GL_FALSE,model_transform)
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES,0,self.vertexCount)
+
+    def destroy(self):
+        for model in self.models:
+            model.destroy()
 
 ############################# Control #########################################
 
@@ -492,6 +516,11 @@ class App:
         self.numFrames += 1
 
     def quit(self):
+        self.wood_texture.destroy()
+        self.spring.destroy()
+        self.monkey.destroy()
+        self.light.destroy()
+        self.light2.destroy()
         glDeleteProgram(self.shader)
         pg.quit()
 

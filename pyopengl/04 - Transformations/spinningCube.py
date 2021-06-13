@@ -67,6 +67,7 @@ class App:
 
     def quit(self):
         self.cube.destroy()
+        self.wood_texture.destroy()
         glDeleteProgram(self.shader)
         pg.quit()
 
@@ -156,9 +157,8 @@ class Cube:
         glDrawArrays(GL_TRIANGLES, 0, self.vertex_count)
 
     def destroy(self):
-        #glDeleteVertexArrays(1, self.vao)
-        #glDeleteBuffers(1,self.vbo)
-        pass
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1,(self.vbo,))
 
 class Material:
     def __init__(self, filepath):
@@ -177,5 +177,8 @@ class Material:
     def use(self):
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D,self.texture)
+
+    def destroy(self):
+        glDeleteTextures(1, (self.texture,))
 
 myApp = App()

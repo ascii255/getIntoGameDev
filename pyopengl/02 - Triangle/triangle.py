@@ -82,7 +82,7 @@ class Triangle:
         glDrawArrays(GL_TRIANGLES, 0, self.vertex_count)
 
     def destroy(self):
-        glDeleteVertexArrays(self.vao)
-        glDeleteBuffers(self.vbo)
+        glDeleteVertexArrays(1,(self.vao,))
+        glDeleteBuffers(1,(self.vbo,))
 
 myApp = App()

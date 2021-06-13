@@ -111,6 +111,8 @@ class App:
 
     def quit(self):
         self.cube.destroy()
+        self.wood_texture.destroy()
+        self.light.destroy()
         glDeleteProgram(self.shader)
         pg.quit()
 
@@ -203,9 +205,8 @@ class Cube:
         glDrawArrays(GL_TRIANGLES, 0, self.vertex_count)
 
     def destroy(self):
-        #glDeleteVertexArrays(1, self.vao)
-        #glDeleteBuffers(1,self.vbo)
-        pass
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1, (self.vbo,))
 
 class Material:
     def __init__(self, filepath):
@@ -224,6 +225,9 @@ class Material:
     def use(self):
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D,self.texture)
+    
+    def destroy(self):
+        glDeleteTextures(1, (self.texture,))
 
 class Player:
     def __init__(self, position):
@@ -278,6 +282,9 @@ class Light:
 
     def draw(self):
         self.model.draw(self.position)
+
+    def destroy(self):
+        self.model.destroy()
 
 class CubeBasic:
     def __init__(self, shader, l, w, h, r, g, b):
@@ -355,5 +362,9 @@ class CubeBasic:
         glUniformMatrix4fv(glGetUniformLocation(self.shader,"model"),1,GL_FALSE,model_transform)
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, self.vertex_count)
+
+    def destroy(self):
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1, (self.vbo,))
 
 myApp = App()
