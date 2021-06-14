@@ -24,7 +24,7 @@ class Player:
         self.move(np.degrees(angle), amount)
     
     def draw(self):
-        self.model.draw(self.position, self.direction)
+        self.model.draw(self.position, self.direction + 90)
     
     def destroy(self):
         self.model.destroy()
@@ -62,6 +62,92 @@ class Dot:
 
     def destroy(self):
         self.model.destroy()
+
+class Cube:
+    def __init__(self, shader, material, position):
+        self.material = material
+        self.shader = shader
+        self.position = position
+        glUseProgram(shader)
+        # x, y, z, s, t, nx, ny, nz
+        self.vertices = (
+                -0.5, -0.5, -0.5, 0, 0, 0, 0, -1,
+                -0.5,  0.5, -0.5, 1, 0, 0, 0, -1,
+                 0.5,  0.5, -0.5, 1, 1, 0, 0, -1,
+
+                 0.5,  0.5, -0.5, 1, 1, 0, 0, -1,
+                 0.5, -0.5, -0.5, 0, 1, 0, 0, -1,
+                -0.5, -0.5, -0.5, 0, 0, 0, 0, -1,
+
+                 0.5,  0.5,  0.5, 0, 0, 0, 0,  1,
+                -0.5,  0.5,  0.5, 1, 0, 0, 0,  1,
+                -0.5, -0.5,  0.5, 1, 1, 0, 0,  1,
+
+                -0.5, -0.5,  0.5, 1, 1, 0, 0,  1,
+                 0.5, -0.5,  0.5, 0, 1, 0, 0,  1,
+                 0.5,  0.5,  0.5, 0, 0, 0, 0,  1,
+
+                -0.5, -0.5,  0.5, 1, 0, -1, 0,  0,
+                -0.5,  0.5,  0.5, 1, 1, -1, 0,  0,
+                -0.5,  0.5, -0.5, 0, 1, -1, 0,  0,
+
+                -0.5,  0.5, -0.5, 0, 1, -1, 0,  0,
+                -0.5, -0.5, -0.5, 0, 0, -1, 0,  0,
+                -0.5, -0.5,  0.5, 1, 0, -1, 0,  0,
+
+                 0.5, -0.5, -0.5, 1, 0, 1, 0,  0,
+                 0.5,  0.5, -0.5, 1, 1, 1, 0,  0,
+                 0.5,  0.5,  0.5, 0, 1, 1, 0,  0,
+
+                 0.5,  0.5,  0.5, 0, 1, 1, 0,  0,
+                 0.5, -0.5,  0.5, 0, 0, 1, 0,  0,
+                 0.5, -0.5, -0.5, 1, 0, 1, 0,  0,
+
+                 0.5, -0.5,  0.5, 0, 1, 0, -1,  0,
+                -0.5, -0.5,  0.5, 1, 1, 0, -1,  0,
+                -0.5, -0.5, -0.5, 1, 0, 0, -1,  0,
+
+                -0.5, -0.5, -0.5, 1, 0, 0, -1,  0,
+                 0.5, -0.5, -0.5, 0, 0, 0, -1,  0,
+                 0.5, -0.5,  0.5, 0, 1, 0, -1,  0,
+
+                 0.5,  0.5, -0.5, 0, 1, 0, 1,  0,
+                -0.5,  0.5, -0.5, 1, 1, 0, 1,  0,
+                -0.5,  0.5,  0.5, 1, 0, 0, 1,  0,
+
+                -0.5,  0.5,  0.5, 1, 0, 0, 1,  0,
+                 0.5,  0.5,  0.5, 0, 0, 0, 1,  0,
+                 0.5,  0.5, -0.5, 0, 1, 0, 1,  0
+            )
+        self.vertex_count = len(self.vertices)//8
+        self.vertices = np.array(self.vertices, dtype=np.float32)
+
+        self.vao = glGenVertexArrays(1)
+        glBindVertexArray(self.vao)
+        self.vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
+        glBufferData(GL_ARRAY_BUFFER, self.vertices.nbytes, self.vertices, GL_STATIC_DRAW)
+
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 32, ctypes.c_void_p(0))
+
+        glEnableVertexAttribArray(1)
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 32, ctypes.c_void_p(12))
+
+        glEnableVertexAttribArray(2)
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 32, ctypes.c_void_p(20))
+
+    def draw(self):
+        glUseProgram(self.shader)
+        model_transform = pyrr.matrix44.create_from_translation(vec=np.array(self.position),dtype=np.float32)
+        glUniformMatrix4fv(glGetUniformLocation(self.shader,"model"),1,GL_FALSE,model_transform)
+        self.material.use()
+        glBindVertexArray(self.vao)
+        glDrawArrays(GL_TRIANGLES, 0, self.vertex_count)
+
+    def destroy(self):
+        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteBuffers(1, (self.vbo,))
 
 ############################## view ###########################################
 
@@ -300,19 +386,33 @@ class Camera:
         self.up = np.array([0, 0, 0],dtype=np.float32)
         self.global_up = np.array([0, 0, 1], dtype=np.float32)
         self.targetObject = targetObject
+        self.followAcceleration = 0
+        self.followSpeed = 0
+        self.followDistance = 50
 
-    def update(self, shaders):
-        self.forward[0] = self.targetObject.position[0] - self.position[0]
-        self.forward[1] = self.targetObject.position[1] - self.position[1]
-        self.forward[2] = self.targetObject.position[2] - self.position[2]
+    def update(self, shaders, frameTime):
+        self.forward = self.targetObject.position - self.position
         
-        self.right = pyrr.vector3.cross(self.forward, self.global_up)
-        self.up = pyrr.vector3.cross(self.right, self.forward)
+        self.right = pyrr.vector.normalize(pyrr.vector3.cross(self.forward, self.global_up))
+        self.up = pyrr.vector.normalize(pyrr.vector3.cross(self.right, self.forward))
         lookat_matrix = pyrr.matrix44.create_look_at(self.position, self.targetObject.position, self.up,dtype=np.float32)
         for shader in shaders:
             glUseProgram(shader)
             glUniformMatrix4fv(glGetUniformLocation(shader,"view"),1,GL_FALSE,lookat_matrix)
             glUniform3fv(glGetUniformLocation(shader,"cameraPos"),1,self.position)
+        
+        #follow player
+        self.followAcceleration = -1
+        if pyrr.vector.squared_length(self.forward) > self.followDistance:
+            self.followAcceleration += 2
+        self.forward = pyrr.vector.normalize(self.forward)
+        self.followSpeed += 0.0025 * frameTime * self.followAcceleration
+        if self.followSpeed < 0:
+            self.followSpeed = 0
+        self.position[0] += 0.0025 * frameTime * self.followSpeed * self.forward[0]
+        self.position[1] += 0.0025 * frameTime * self.followSpeed * self.forward[1]
+        self.position[2] = 5 - self.followSpeed
+
 
 ############################## control ########################################
 
@@ -359,6 +459,14 @@ class App:
         self.light2 = Light([self.shaderBasic, self.shader], [0.9, 0.4, 0.0], [0,1.7,0.5], 2, self.lightCount)
         self.lightCount += 1
         self.click_dots = []
+        #make cubes
+        self.cubes = []
+        self.cubes.append(Cube(self.shader, self.wood_texture,[1,1,0.5]))
+        self.cubes.append(Cube(self.shader, self.wood_texture,[4,1,0.5]))
+        self.cubes.append(Cube(self.shader, self.wood_texture,[7,1,0.5]))
+        self.cubes.append(Cube(self.shader, self.wood_texture,[10,1,0.5]))
+        self.cubes.append(Cube(self.shader, self.wood_texture,[13,1,0.5]))
+        self.cubes.append(Cube(self.shader, self.wood_texture,[16,1,0.5]))
         self.mainLoop()
 
     def createShader(self, vertexFilepath, fragmentFilepath):
@@ -392,8 +500,8 @@ class App:
             #update objects
             self.light.update()
             self.light2.update()
-            self.camera.update([self.shaderBasic, self.shader])
-            
+            self.camera.update([self.shaderBasic, self.shader], self.frameTime)
+            #dots
             if (len(self.click_dots) > 0):
                 first_dot = self.click_dots[0]
                 self.player.move_towards(first_dot, 0.0025*self.frameTime)
@@ -405,6 +513,8 @@ class App:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.light.draw()
             self.light2.draw()
+            for cube in self.cubes:
+                cube.draw()
             self.player.draw()
             for dot in self.click_dots:
                 dot.draw()
@@ -416,27 +526,16 @@ class App:
 
     def handleKeys(self):
         keys = pg.key.get_pressed()
-        if keys[pg.K_w]:
-            self.player.move(90, 0.0025*self.frameTime)
-            return
         if keys[pg.K_a]:
-            self.player.move(180, 0.0025*self.frameTime)
-            return
-        if keys[pg.K_s]:
-            self.player.move(270, 0.0025*self.frameTime)
-            return
+            self.camera.position -= 0.0025 * self.frameTime * self.camera.right
         if keys[pg.K_d]:
-            self.player.move(0, 0.0025*self.frameTime)
-            return
+            self.camera.position += 0.0025 * self.frameTime * self.camera.right
 
     def handleMouse(self):
         #print("Click")
         forward = self.camera.forward
         up = self.camera.up
         right = self.camera.right
-        forward = pyrr.vector.normalize(forward)
-        up = pyrr.vector.normalize(up)
-        right = pyrr.vector.normalize(right)
         #print("Camera Directions:")
         #print(f"Forward: {forward}")
         #print(f"Up: {up}")
@@ -449,9 +548,9 @@ class App:
         forward += upAmount * up
         forward = pyrr.vector.normalize(forward)
         if (forward[2] < 0):
-            x = 0
-            y = 0
-            z = 5
+            x = self.camera.position[0]
+            y = self.camera.position[1]
+            z = self.camera.position[2]
             while (z > 0):
                 x += forward[0]
                 y += forward[1]
@@ -467,7 +566,7 @@ class App:
             pg.display.set_caption(f"Running at {framerate} fps.")
             self.lastTime = self.currentTime
             self.numFrames = -1
-            self.frameTime = float(1000.0 / max(framerate,1))
+            self.frameTime = float(1000.0 / max(framerate,60))
         self.numFrames += 1
 
     def quit(self):
@@ -475,6 +574,8 @@ class App:
         self.player.destroy()
         self.light.destroy()
         self.light2.destroy()
+        for cube in self.cubes:
+                cube.destroy()
         for dot in self.click_dots:
                 dot.destroy()
         glDeleteProgram(self.shader)
