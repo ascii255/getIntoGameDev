@@ -15,16 +15,16 @@ class Player:
 
     def move(self, direction, amount):
         self.position[0] += amount * self.moveSpeed * np.cos(np.radians(direction),dtype=np.float32)
-        self.position[1] += amount * self.moveSpeed * np.sin(np.radians(direction),dtype=np.float32)
+        self.position[1] -= amount * self.moveSpeed * np.sin(np.radians(direction),dtype=np.float32)
         self.direction = direction
 
     def move_towards(self, targetObject, amount):
         directionVector = targetObject.position - self.position
-        angle = np.arctan2(directionVector[1],directionVector[0])
+        angle = np.arctan2(-directionVector[1],directionVector[0])
         self.move(np.degrees(angle), amount)
     
     def draw(self):
-        self.model.draw(self.position, self.direction)
+        self.model.draw(self.position, self.direction - 90)
     
     def destroy(self):
         self.model.destroy()
@@ -397,7 +397,7 @@ class App:
             if (len(self.click_dots) > 0):
                 first_dot = self.click_dots[0]
                 self.player.move_towards(first_dot, 0.0025*self.frameTime)
-                if pyrr.vector.squared_length(self.player.position - first_dot.position) < 0.5:
+                if pyrr.vector.squared_length(self.player.position - first_dot.position) < 0.1:
                     self.click_dots.pop(0)
                     first_dot.destroy()
             
