@@ -12,14 +12,17 @@ class Player:
         self.moveSpeed = 1
         self.model = model
         self.direction = 0
+        self.camera = None
 
     def move(self, direction, amount):
         self.position[0] += amount * self.moveSpeed * np.cos(np.radians(direction),dtype=np.float32)
         self.position[1] -= amount * self.moveSpeed * np.sin(np.radians(direction),dtype=np.float32)
+        self.camera.position[0] += amount * self.moveSpeed * np.cos(np.radians(direction),dtype=np.float32)
+        self.camera.position[1] -= amount * self.moveSpeed * np.sin(np.radians(direction),dtype=np.float32)
         self.direction = direction
 
-    def move_towards(self, targetObject, amount):
-        directionVector = targetObject.position - self.position
+    def move_towards(self, targetPosition, amount):
+        directionVector = targetPosition - self.position
         angle = np.arctan2(-directionVector[1],directionVector[0])
         self.move(np.degrees(angle), amount)
     
@@ -386,12 +389,9 @@ class Camera:
         self.up = np.array([0, 0, 0],dtype=np.float32)
         self.global_up = np.array([0, 0, 1], dtype=np.float32)
         self.targetObject = targetObject
-        self.followAcceleration = 0
-        self.followSpeed = 0
-        self.followDistance = 50
 
     def update(self, shaders, frameTime):
-        self.forward = self.targetObject.position - self.position
+        self.forward = pyrr.vector.normalize(self.targetObject.position - self.position)
         self.right = pyrr.vector.normalize(pyrr.vector3.cross(self.forward, self.global_up))
         self.up = pyrr.vector.normalize(pyrr.vector3.cross(self.right, self.forward))
 
@@ -400,18 +400,7 @@ class Camera:
             glUseProgram(shader)
             glUniformMatrix4fv(glGetUniformLocation(shader,"view"),1,GL_FALSE,lookat_matrix)
             glUniform3fv(glGetUniformLocation(shader,"cameraPos"),1,self.position)
-        
-        #follow player
-        self.followAcceleration = -1
-        if pyrr.vector.squared_length(self.forward) > self.followDistance:
-            self.followAcceleration += 2
-        self.forward = pyrr.vector.normalize(self.forward)
-        self.followSpeed += 0.0025 * frameTime * self.followAcceleration
-        if self.followSpeed < 0:
-            self.followSpeed = 0
-        self.position[0] += 0.0025 * frameTime * self.followSpeed * self.forward[0]
-        self.position[1] += 0.0025 * frameTime * self.followSpeed * self.forward[1]
-        self.position[2] = 5 - self.followSpeed
+
 
 ############################## control ########################################
 
@@ -420,6 +409,7 @@ class App:
         #initialise pygame
         pg.init()
         pg.display.set_mode((640,480), pg.OPENGL|pg.DOUBLEBUF)
+        pg.mouse.set_visible(False)
         pg.mouse.set_pos((320,240))
         self.lastTime = 0
         self.currentTime = 0
@@ -452,7 +442,8 @@ class App:
         self.wood_texture = Material("gfx/crate")
         monkey_model = ObjModel("models", "monkey.obj", self.shader, self.wood_texture)
         self.player = Player([0,1,0], monkey_model)
-        self.camera = Camera([0,0,5], self.player)
+        self.camera = Camera([-3,1,3], self.player)
+        self.player.camera = self.camera
         self.light = Light([self.shaderBasic, self.shader], [0.2, 0.7, 0.8], [1,1.7,1.5], 2, self.lightCount)
         self.lightCount += 1
         self.light2 = Light([self.shaderBasic, self.shader], [0.9, 0.4, 0.0], [0,1.7,0.5], 2, self.lightCount)
@@ -493,20 +484,12 @@ class App:
             for event in pg.event.get():
                 if (event.type == pg.KEYDOWN and event.key==pg.K_ESCAPE):
                     running = False
-                if (event.type == pg.MOUSEBUTTONDOWN and event.button==1):
-                    self.handleMouse()
+            self.handleMouse()
             self.handleKeys()
             #update objects
             self.light.update()
             self.light2.update()
             self.camera.update([self.shaderBasic, self.shader], self.frameTime)
-            #dots
-            if (len(self.click_dots) > 0):
-                first_dot = self.click_dots[0]
-                self.player.move_towards(first_dot, 0.0025*self.frameTime)
-                if pyrr.vector.squared_length(self.player.position - first_dot.position) < 0.1:
-                    self.click_dots.pop(0)
-                    first_dot.destroy()
             
             #refresh screen
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -525,37 +508,28 @@ class App:
 
     def handleKeys(self):
         keys = pg.key.get_pressed()
+        if keys[pg.K_w]:
+            forward = self.camera.forward
+            self.player.move_towards(self.player.position + forward, 0.0025 * self.frameTime)
         if keys[pg.K_a]:
-            self.camera.position -= 0.0025 * self.frameTime * self.camera.right
+            right = -self.camera.right
+            self.player.move_towards(self.player.position + right, 0.0025 * self.frameTime)
+        if keys[pg.K_s]:
+            forward = -self.camera.forward
+            self.player.move_towards(self.player.position + forward, 0.0025 * self.frameTime)
         if keys[pg.K_d]:
-            self.camera.position += 0.0025 * self.frameTime * self.camera.right
+            right = self.camera.right
+            self.player.move_towards(self.player.position + right, 0.0025 * self.frameTime)
 
     def handleMouse(self):
-        #print("Click")
-        forward = self.camera.forward
         up = self.camera.up
         right = self.camera.right
-        #print("Camera Directions:")
-        #print(f"Forward: {forward}")
-        #print(f"Up: {up}")
-        #print(f"Right: {right}")
         (x,y) = pg.mouse.get_pos()
         rightAmount = (x - 320)/640
-        upAmount = (240 - y)/640
-        #print(f"mouse clicked at ({x},{y})")
-        forward += rightAmount * right
-        forward += upAmount * up
-        forward = pyrr.vector.normalize(forward)
-        if (forward[2] < 0):
-            x = self.camera.position[0]
-            y = self.camera.position[1]
-            z = self.camera.position[2]
-            while (z > 0):
-                x += forward[0]
-                y += forward[1]
-                z += forward[2]
-            #print(f"Hit ground at ({x},{y})")
-            self.click_dots.append(Dot(self.shaderBasic, [x,y,0]))
+        upAmount = (240 - y)/480
+        self.camera.position -= 0.1 * self.frameTime * rightAmount * right
+        self.camera.position -= 0.1 * self.frameTime * upAmount * up
+        pg.mouse.set_pos((320,240))
 
     def showFrameRate(self):
         self.currentTime = pg.time.get_ticks()
