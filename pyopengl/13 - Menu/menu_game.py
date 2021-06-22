@@ -66,28 +66,28 @@ def createShader(vertexFilepath, fragmentFilepath):
         return shader
 
 def create_framebuffer():
-        fbo = glGenFramebuffers(1)
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo)
-        
-        colorBuffer = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, colorBuffer)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 640, 480, 0, GL_RGB, GL_UNSIGNED_BYTE, None)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glBindTexture(GL_TEXTURE_2D, 0)
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
-                                GL_TEXTURE_2D, colorBuffer, 0)
-        
-        depthStencilBuffer = glGenRenderbuffers(1)
-        glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer)
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 640, 480)
-        glBindRenderbuffer(GL_RENDERBUFFER,0)
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, 
-                                    GL_RENDERBUFFER, depthStencilBuffer)
+    fbo = glGenFramebuffers(1)
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo)
+    
+    colorBuffer = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, colorBuffer)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 640, 480, 0, GL_RGB, GL_UNSIGNED_BYTE, None)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glBindTexture(GL_TEXTURE_2D, 0)
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
+                            GL_TEXTURE_2D, colorBuffer, 0)
+    
+    depthStencilBuffer = glGenRenderbuffers(1)
+    glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 640, 480)
+    glBindRenderbuffer(GL_RENDERBUFFER,0)
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, 
+                                GL_RENDERBUFFER, depthStencilBuffer)
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+    glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
-        return (fbo, colorBuffer, depthStencilBuffer)
+    return (fbo, colorBuffer, depthStencilBuffer)
 
 def teardown_program_environment(shaders, framebuffer):
     (fbo, colorBuffer, depthStencilBuffer) = framebuffer
