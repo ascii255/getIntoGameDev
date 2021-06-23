@@ -16,6 +16,104 @@ NEW_GAME = 1
 OPEN_MENU = 2
 EXIT = 3
 
+FONT_TEX_COORDS = {
+    "!" :  [1.0/32,  15.0/16, 2.0/32,  14.0/16],
+    "\"" : [2.0/32,  15.0/16, 3.0/32,  14.0/16],
+    "#" :  [3.0/32,  15.0/16, 4.0/32,  14.0/16],
+    "$" :  [4.0/32,  15.0/16, 5.0/32,  14.0/16],
+    "%" :  [5.0/32,  15.0/16, 6.0/32,  14.0/16],
+    "&" :  [6.0/32,  15.0/16, 7.0/32,  14.0/16],
+    "\'" : [7.0/32,  15.0/16, 8.0/32,  14.0/16],
+    "(" :  [8.0/32,  15.0/16, 9.0/32,  14.0/16],
+    ")" :  [9.0/32,  15.0/16, 10.0/32, 14.0/16],
+    "*" :  [10.0/32, 15.0/16, 11.0/32, 14.0/16],
+    "+" :  [11.0/32, 15.0/16, 12.0/32, 14.0/16],
+    "," :  [12.0/32, 15.0/16, 13.0/32, 14.0/16],
+    "-" :  [13.0/32, 15.0/16, 14.0/32, 14.0/16],
+    "." :  [14.0/32, 15.0/16, 15.0/32, 14.0/16],
+    "/" :  [15.0/32, 15.0/16, 16.0/32, 14.0/16],
+    "0" :  [16.0/32, 15.0/16, 17.0/32, 14.0/16],
+    "1" :  [17.0/32, 15.0/16, 18.0/32, 14.0/16],
+    "2" :  [18.0/32, 15.0/16, 19.0/32, 14.0/16],
+    "3" :  [19.0/32, 15.0/16, 20.0/32, 14.0/16],
+    "4" :  [20.0/32, 15.0/16, 21.0/32, 14.0/16],
+    "5" :  [21.0/32, 15.0/16, 22.0/32, 14.0/16],
+    "6" :  [22.0/32, 15.0/16, 23.0/32, 14.0/16],
+    "7" :  [23.0/32, 15.0/16, 24.0/32, 14.0/16],
+    "8" :  [24.0/32, 15.0/16, 25.0/32, 14.0/16],
+    "9" :  [25.0/32, 15.0/16, 26.0/32, 14.0/16],
+    ":" :  [26.0/32, 15.0/16, 27.0/32, 14.0/16],
+    ";" :  [27.0/32, 15.0/16, 28.0/32, 14.0/16],
+    "<" :  [28.0/32, 15.0/16, 29.0/32, 14.0/16],
+    "=" :  [29.0/32, 15.0/16, 30.0/32, 14.0/16],
+    ">" :  [30.0/32, 15.0/16, 31.0/32, 14.0/16],
+    "?" :  [31.0/32, 15.0/16, 32.0/32, 14.0/16],
+
+    "@" :  [0.0,     14.0/16, 1.0/32,  13.0/16],
+    "A" :  [1.0/32,  14.0/16, 2.0/32,  13.0/16],
+    "B" :  [2.0/32,  14.0/16, 3.0/32,  13.0/16],
+    "C" :  [3.0/32,  14.0/16, 4.0/32,  13.0/16],
+    "D" :  [4.0/32,  14.0/16, 5.0/32,  13.0/16],
+    "E" :  [5.0/32,  14.0/16, 6.0/32,  13.0/16],
+    "F" :  [6.0/32,  14.0/16, 7.0/32,  13.0/16],
+    "G" :  [7.0/32,  14.0/16, 8.0/32,  13.0/16],
+    "H" :  [8.0/32,  14.0/16, 9.0/32,  13.0/16],
+    "I" :  [9.0/32,  14.0/16, 10.0/32, 13.0/16],
+    "J" :  [10.0/32, 14.0/16, 11.0/32, 13.0/16],
+    "K" :  [11.0/32, 14.0/16, 12.0/32, 13.0/16],
+    "L" :  [12.0/32, 14.0/16, 13.0/32, 13.0/16],
+    "M" :  [13.0/32, 14.0/16, 14.0/32, 13.0/16],
+    "N" :  [14.0/32, 14.0/16, 15.0/32, 13.0/16],
+    "O" :  [15.0/32, 14.0/16, 16.0/32, 13.0/16],
+    "P" :  [16.0/32, 14.0/16, 17.0/32, 13.0/16],
+    "Q" :  [17.0/32, 14.0/16, 18.0/32, 13.0/16],
+    "R" :  [18.0/32, 14.0/16, 19.0/32, 13.0/16],
+    "S" :  [19.0/32, 14.0/16, 20.0/32, 13.0/16],
+    "T" :  [20.0/32, 14.0/16, 21.0/32, 13.0/16],
+    "U" :  [21.0/32, 14.0/16, 22.0/32, 13.0/16],
+    "V" :  [22.0/32, 14.0/16, 23.0/32, 13.0/16],
+    "W" :  [23.0/32, 14.0/16, 24.0/32, 13.0/16],
+    "X" :  [24.0/32, 14.0/16, 25.0/32, 13.0/16],
+    "Y" :  [25.0/32, 14.0/16, 26.0/32, 13.0/16],
+    "Z" :  [26.0/32, 14.0/16, 27.0/32, 13.0/16],
+    "[" :  [27.0/32, 14.0/16, 28.0/32, 13.0/16],
+    "\\" : [28.0/32, 14.0/16, 29.0/32, 13.0/16],
+    "]" :  [29.0/32, 14.0/16, 30.0/32, 13.0/16],
+    "^" :  [30.0/32, 14.0/16, 31.0/32, 13.0/16],
+    "_" :  [31.0/32, 14.0/16, 32.0/32, 13.0/16],
+
+    "`" :  [0.0,     13.0/16, 1.0/32,  12.0/16],
+    "a" :  [1.0/32,  13.0/16, 2.0/32,  12.0/16],
+    "b" :  [2.0/32,  13.0/16, 3.0/32,  12.0/16],
+    "c" :  [3.0/32,  13.0/16, 4.0/32,  12.0/16],
+    "d" :  [4.0/32,  13.0/16, 5.0/32,  12.0/16],
+    "e" :  [5.0/32,  13.0/16, 6.0/32,  12.0/16],
+    "f" :  [6.0/32,  13.0/16, 7.0/32,  12.0/16],
+    "g'" : [7.0/32,  13.0/16, 8.0/32,  12.0/16],
+    "h" :  [8.0/32,  13.0/16, 9.0/32,  12.0/16],
+    "i" :  [9.0/32,  13.0/16, 10.0/32, 12.0/16],
+    "j" :  [10.0/32, 13.0/16, 11.0/32, 12.0/16],
+    "k" :  [11.0/32, 13.0/16, 12.0/32, 12.0/16],
+    "l" :  [12.0/32, 13.0/16, 13.0/32, 12.0/16],
+    "m" :  [13.0/32, 13.0/16, 14.0/32, 12.0/16],
+    "n" :  [14.0/32, 13.0/16, 15.0/32, 12.0/16],
+    "o" :  [15.0/32, 13.0/16, 16.0/32, 12.0/16],
+    "p" :  [16.0/32, 13.0/16, 17.0/32, 12.0/16],
+    "q" :  [17.0/32, 13.0/16, 18.0/32, 12.0/16],
+    "r" :  [18.0/32, 13.0/16, 19.0/32, 12.0/16],
+    "s" :  [19.0/32, 13.0/16, 20.0/32, 12.0/16],
+    "t" :  [20.0/32, 13.0/16, 21.0/32, 12.0/16],
+    "u" :  [21.0/32, 13.0/16, 22.0/32, 12.0/16],
+    "v" :  [22.0/32, 13.0/16, 23.0/32, 12.0/16],
+    "w" :  [23.0/32, 13.0/16, 24.0/32, 12.0/16],
+    "x" :  [24.0/32, 13.0/16, 25.0/32, 12.0/16],
+    "y" :  [25.0/32, 13.0/16, 26.0/32, 12.0/16],
+    "z" :  [26.0/32, 13.0/16, 27.0/32, 12.0/16],
+    "{" :  [27.0/32, 13.0/16, 28.0/32, 12.0/16],
+    "|" :  [28.0/32, 13.0/16, 29.0/32, 12.0/16],
+    "}" :  [29.0/32, 13.0/16, 30.0/32, 12.0/16]
+}
+
 ############################## helper functions ###############################
 
 def initialise_pygame():
@@ -33,6 +131,8 @@ def initialise_opengl():
                                         "shaders/fragment_2d_textured.txt")
     shader2DColored = createShader("shaders/vertex_2d_colored.txt",
                                             "shaders/fragment_2d_colored.txt")
+    shader2DText = createShader("shaders/vertex_2d_textured.txt",
+                                            "shaders/fragment_text.txt")
 
     glEnable(GL_CULL_FACE)
     glCullFace(GL_BACK)
@@ -50,7 +150,7 @@ def initialise_opengl():
 
     glUseProgram(shader3DColored)
     glUniformMatrix4fv(glGetUniformLocation(shader3DColored,"projection"),1,GL_FALSE,projection_transform)
-    return (shader3DTextured, shader3DColored, shader2DTextured, shader2DColored)
+    return (shader3DTextured, shader3DColored, shader2DTextured, shader2DColored, shader2DText)
 
 def createShader(vertexFilepath, fragmentFilepath):
 
@@ -313,7 +413,7 @@ class SimpleMaterial:
 
     def use(self):
         glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D,self.diffuseTexture)
+        glBindTexture(GL_TEXTURE_2D,self.texture)
 
     def destroy(self):
         glDeleteTextures(1, (self.texture,))
@@ -557,6 +657,7 @@ def exit_click():
 class Button:
     def __init__(self, pos, size, color, shader):
         self.clickAction = None
+        self.label = None
         self.pos = pos
         self.size = size
         self.color = color
@@ -598,8 +699,12 @@ class Button:
     def handle_mouse_movement(self, pos):
         if self.inside(pos):
             newColor = self.invertedColor
+            if self.label is not None:
+                self.label.color = np.array(self.color,dtype=np.float32)
         else:
             newColor = self.color
+            if self.label is not None:
+                self.label.color = np.array(self.color,dtype=np.float32)
         
         for i in range(6):
             self.vertices[5 * i + 2] = newColor[0]
@@ -622,6 +727,91 @@ class Button:
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES,0,6)
     
+    def destroy(self):
+        glDeleteBuffers(1, (self.vbo,))
+        glDeleteVertexArrays(1, (self.vao,))
+
+class TextLine:
+    def __init__(self, font, text, shader, fontsize, startPos, color):
+        self.font = font
+        self.text = text
+        self.shader = shader
+        self.vertices = []
+        self.vertexCount = 0
+        self.fontsize = fontsize
+        self.startPos = startPos
+        self.color = np.array(color, dtype=np.float32)
+
+        glUseProgram(self.shader)
+        self.vao = glGenVertexArrays(1)
+        self.vbo = glGenBuffers(1)
+        self.build_text()
+
+    def build_text(self):
+        self.vertices = []
+        self.vertexCount = 0
+
+        for i in range(len(self.text)):
+            character = self.text[i]
+            if character in FONT_TEX_COORDS:
+                #top left pos
+                self.vertices.append(self.startPos[0] + i * self.fontsize[0])
+                self.vertices.append(self.startPos[1] + self.fontsize[1])
+                #top left tex coord
+                self.vertices.append(FONT_TEX_COORDS[character][0])
+                self.vertices.append(FONT_TEX_COORDS[character][1] - 0.15/16)
+                #top right pos
+                self.vertices.append(self.startPos[0] + (i + 1) * self.fontsize[0])
+                self.vertices.append(self.startPos[1] + self.fontsize[1])
+                #top right tex coord
+                self.vertices.append(FONT_TEX_COORDS[character][2])
+                self.vertices.append(FONT_TEX_COORDS[character][1] - 0.15/16)
+                #bottom right pos
+                self.vertices.append(self.startPos[0] + (i + 1) * self.fontsize[0])
+                self.vertices.append(self.startPos[1] - self.fontsize[1])
+                #bottom right tex coord
+                self.vertices.append(FONT_TEX_COORDS[character][2])
+                self.vertices.append(FONT_TEX_COORDS[character][3] - 0.15/16)
+
+                #bottom right pos
+                self.vertices.append(self.startPos[0] + (i + 1) * self.fontsize[0])
+                self.vertices.append(self.startPos[1] - self.fontsize[1])
+                #bottom right tex coord
+                self.vertices.append(FONT_TEX_COORDS[character][2])
+                self.vertices.append(FONT_TEX_COORDS[character][3] - 0.15/16)
+                #bottom left pos
+                self.vertices.append(self.startPos[0] + i * self.fontsize[0])
+                self.vertices.append(self.startPos[1] - self.fontsize[1])
+                #bottom left tex coord
+                self.vertices.append(FONT_TEX_COORDS[character][0])
+                self.vertices.append(FONT_TEX_COORDS[character][3] - 0.15/16)
+                #top left pos
+                self.vertices.append(self.startPos[0] + i * self.fontsize[0])
+                self.vertices.append(self.startPos[1] + self.fontsize[1])
+                #top left tex coord
+                self.vertices.append(FONT_TEX_COORDS[character][0])
+                self.vertices.append(FONT_TEX_COORDS[character][1] - 0.15/16)
+                self.vertexCount += 6
+
+        self.vertices = np.array(self.vertices,dtype=np.float32)
+        glUseProgram(self.shader)
+        glBindVertexArray(self.vao)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
+        glBufferData(GL_ARRAY_BUFFER, self.vertices.nbytes, self.vertices, GL_STATIC_DRAW)
+
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, ctypes.c_void_p(0))
+
+        glEnableVertexAttribArray(1)
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, ctypes.c_void_p(8))
+
+    def draw(self):
+        glUseProgram(self.shader)
+        self.font.use()
+        glUniform3fv(glGetUniformLocation(self.shader, "color"), 1, self.color)
+        glBindVertexArray(self.vao)
+        glDrawArrays(GL_TRIANGLES, 0, self.vertexCount)
+
     def destroy(self):
         glDeleteBuffers(1, (self.vbo,))
         glDeleteVertexArrays(1, (self.vao,))
@@ -752,6 +942,7 @@ class MenuApp:
         global shaders
 
         self.shader2DColored = shaders[3]
+        self.shaderText = shaders[4]
 
         pg.mouse.set_visible(True)
         self.lastTime = 0
@@ -761,14 +952,28 @@ class MenuApp:
         self.create_objects()
 
     def create_objects(self):
+
+        self.font = SimpleMaterial("gfx/font")
+
+        self.textLines = []
+
+        newgame_label = TextLine(self.font, "New Game", self.shaderText, [0.04, 0.04], [-0.15, 0.3], [0,0,0])
+        self.textLines.append(newgame_label)
+        exit_label = TextLine(self.font, "Exit", self.shaderText, [0.04, 0.04], [-0.15, -0.3], [0,0,0])
+        self.textLines.append(exit_label)
+        title = TextLine(self.font, "Monke Madness", self.shaderText, [0.08, 0.08], [-0.5, 0.7], [1,0,0])
+        self.textLines.append(title)
+
         self.buttons = []
 
         newgame_button = Button((0,0.3), (0.4, 0.1), (1, 1, 0), self.shader2DColored)
         newgame_button.clickAction = new_game_click
+        newgame_button.label = newgame_label
         self.buttons.append(newgame_button)
 
         exit_button = Button((0,-0.3), (0.4, 0.1), (1, 1, 0), self.shader2DColored)
         exit_button.clickAction = exit_click
+        exit_button.label = exit_label
         self.buttons.append(exit_button)
 
     def mainLoop(self):
@@ -784,8 +989,11 @@ class MenuApp:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glClear(GL_COLOR_BUFFER_BIT)
         glDisable(GL_DEPTH_TEST)
+        glDisable(GL_CULL_FACE)
         for button in self.buttons:
             button.draw()
+        for line in self.textLines:
+            line.draw()
         pg.display.flip()
 
         #timing
@@ -829,6 +1037,9 @@ class MenuApp:
     def quit(self):
         for button in self.buttons:
             button.destroy()
+        for line in self.textLines:
+            line.destroy()
+        self.font.destroy()
 
 ############################## top-level control ##############################
 initialise_pygame()
