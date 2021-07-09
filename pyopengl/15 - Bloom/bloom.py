@@ -154,7 +154,7 @@ def initialise_opengl():
     glUseProgram(shader2DTextured)
     glUniform1i(glGetUniformLocation(shader2DTextured, "regular_texture"), 0)
     glUniform1i(glGetUniformLocation(shader2DTextured, "bright_texture"), 1)
-    
+
     return (shader3DTextured, shader3DColored, shader2DTextured, shader2DColored, shader2DText)
 
 def createShader(vertexFilepath, fragmentFilepath):
@@ -891,7 +891,6 @@ class GameApp:
         self.light2 = Light([self.shader3DColored, self.shader3DTextured], [0.9, 0.4, 0.0], [0,1.7,0.5], 2, self.lightCount)
         self.lightCount += 1
         self.screen = TexturedQuad(0, 0, 2, 2, (self.regularCB, self.brightCB), self.shader2DTextured)
-        #self.screen = TexturedQuad(0, 0, 2, 2, (self.brightCB,), self.shader2DTextured)
         self.hud_texture = SimpleMaterial("gfx/hud")
         self.hud = TexturedQuad(0, 0, 2, 2, (self.hud_texture.texture,), self.shader2DTextured)
 
