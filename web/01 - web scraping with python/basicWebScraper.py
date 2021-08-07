@@ -9,24 +9,24 @@ print("Opened page")
 
 htmlRaw = page.read()
 print("Read page contents")
-#print(f"Page contents stored as {htmlRaw}")
+#print(f"Contents stored as {htmlRaw}")
 
-htmlDecoded = htmlRaw.decode("utf-8")
-print("Page contents decoded as utf-8")
-#print(htmlDecoded)
+htmlParsed = htmlRaw.decode("utf-8")
+print("Page contents decoded in utf-8")
+#print(f"Contents stored as {htmlParsed}")
 
-#grab main block
-dataStart = htmlDecoded.find("<div class=\"js-store\"")
-dataEnd = htmlDecoded.find("</div>",dataStart)
-#print(f"Data starts at index {dataStart} and ends at index {dataEnd}")
-data = htmlDecoded[dataStart:dataEnd]
+#html code is stored as a string, so standard string methods can be used
+dataStart = htmlParsed.find("<div class=\"js-store\"")
+dataEnd = htmlParsed.find("</div>", dataStart)
+print(f"data starts at index {dataStart} and ends at index {dataEnd}")
+data = htmlParsed[dataStart:dataEnd]
 #print(data)
 
+#start refining data
 data = data.replace("&quot;","")
 #print(data)
 data = data.replace("{","\n")
 #print(data)
-
 dataStart = data.find("tabs:[\n")
 dataEnd = data.find("],current_type:all", dataStart)
 data = data[dataStart:dataEnd]
