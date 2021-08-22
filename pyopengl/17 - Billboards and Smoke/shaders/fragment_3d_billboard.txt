@@ -18,7 +18,7 @@ uniform Light lights[MAX_LIGHT_COUNT];
 uniform vec3 cameraPos;
 uniform vec3 ambient;
 
-vec3 CalculatePointLight(Light light, vec3 cameraPosition, vec3 fragmentPosition, vec3 normal, vec2 texCoord);
+vec4 CalculatePointLight(Light light, vec3 cameraPosition, vec3 fragmentPosition, vec3 normal, vec2 texCoord);
 
 layout (location=0) out vec4 regular_colour;
 layout (location=1) out vec4 bright_colour;
@@ -28,14 +28,11 @@ void main()
     vec4 lightLevel = vec4(0.0);
     
     //ambient
-    lightLevel += texture(diffuse, fragmentTexCoord);
+    //lightLevel += texture(diffuse, fragmentTexCoord);
     
     for (int i = 0; i < MAX_LIGHT_COUNT; i++) {
         if (lights[i].enabled) {
-            vec3 afterLight = CalculatePointLight(lights[i], cameraPos, fragmentPos, fragmentNormal, fragmentTexCoord);
-            lightLevel.r += afterLight.r;
-            lightLevel.g += afterLight.g;
-            lightLevel.b += afterLight.b;
+            lightLevel += CalculatePointLight(lights[i], cameraPos, fragmentPos, fragmentNormal, fragmentTexCoord);
         }
     }
     
@@ -43,19 +40,17 @@ void main()
     regular_colour = lightLevel;
 }
 
-vec3 CalculatePointLight(Light light, vec3 cameraPosition, vec3 fragmentPosition, vec3 normal, vec2 texCoord) {
-    vec3 result = vec3(0.0);
+vec4 CalculatePointLight(Light light, vec3 cameraPosition, vec3 fragmentPosition, vec3 normal, vec2 texCoord) {
 
     //directions
-    vec3 norm = normalize(normal);
 	vec3 lightDir = normalize(light.pos - fragmentPosition);
     vec3 viewDir = normalize(cameraPosition - fragmentPosition);
-    vec3 reflectedDir = reflect(-lightDir, norm);
+
+    int inverseDensity = 16;
+
+    float parallel = pow(max(0.0,dot(-viewDir, lightDir)),inverseDensity);
 
     //diffuse
-	result += light.color * max(0.0,dot(norm,lightDir)) * vec3(texture(diffuse, texCoord));
-	
-    //specular
-    result += light.color * light.strength * pow(max(dot(viewDir, reflectedDir), 0.0),32) * vec3(texture(diffuse, texCoord));
-    return result;
+	//return light.color * max(0.0,dot(viewDir, lightDir)) * vec3(texture(diffuse, texCoord));
+    return parallel * vec4(light.color, 1.0) * texture(diffuse, texCoord);
 }

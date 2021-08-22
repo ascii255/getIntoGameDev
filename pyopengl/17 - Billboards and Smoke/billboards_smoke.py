@@ -402,17 +402,20 @@ class Light:
     def __init__(self, shaders, colour, position, strength, index):
         self.model = CubeBasic(shaders[0], 0.1, 0.1, 0.1, colour[0], colour[1], colour[2])
         self.colour = np.array(colour, dtype=np.float32)
-        self.shader = shaders[1]
+        self.shaders = []
+        for i in range(1,len(shaders)):
+            self.shaders.append(shaders[i])
         self.position = np.array(position, dtype=np.float32)
         self.strength = strength
         self.index = index
 
     def update(self):
-        glUseProgram(self.shader)
-        glUniform3fv(glGetUniformLocation(self.shader,f"lights[{self.index}].pos"),1,self.position)
-        glUniform3fv(glGetUniformLocation(self.shader,f"lights[{self.index}].color"),1,self.colour)
-        glUniform1f(glGetUniformLocation(self.shader,f"lights[{self.index}].strength"),self.strength)
-        glUniform1i(glGetUniformLocation(self.shader,f"lights[{self.index}].enabled"),1)
+        for shader in self.shaders:
+            glUseProgram(shader)
+            glUniform3fv(glGetUniformLocation(shader,f"lights[{self.index}].pos"),1,self.position)
+            glUniform3fv(glGetUniformLocation(shader,f"lights[{self.index}].color"),1,self.colour)
+            glUniform1f(glGetUniformLocation(shader,f"lights[{self.index}].strength"),self.strength)
+            glUniform1i(glGetUniformLocation(shader,f"lights[{self.index}].enabled"),1)
 
     def draw(self):
         self.model.draw(self.position)
@@ -1094,9 +1097,9 @@ class GameApp:
         self.monkey = Monkey(np.array([0,0,0],dtype=np.float32), monkey_model)
         self.cube = Cube(self.shader3DTextured, self.wood_texture,[1,1,0.5])
         self.player = Player([0,0,1.2])
-        self.light = Light([self.shader3DColored, self.shader3DTextured], [0.2, 0.7, 0.8], [1,1.7,1.5], 2, self.lightCount)
+        self.light = Light([self.shader3DColored, self.shader3DTextured,self.shader3DBillboard], [0.2, 0.7, 0.8], [1,1.7,1.5], 2, self.lightCount)
         self.lightCount += 1
-        self.light2 = Light([self.shader3DColored, self.shader3DTextured], [0.9, 0.4, 0.0], [0,1.7,0.5], 2, self.lightCount)
+        self.light2 = Light([self.shader3DColored, self.shader3DTextured, self.shader3DBillboard], [0.9, 0.4, 0.0], [0,1.7,0.5], 2, self.lightCount)
         self.lightCount += 1
         self.screen = TexturedQuad(0, 0, 2, 2, (self.regularCB, self.brightCB), self.shader2DTextured)
         self.hud_texture = SimpleMaterial("gfx/hud")
@@ -1105,6 +1108,9 @@ class GameApp:
         self.smoke = BillBoard(1,1,self.smokeTexture, self.shader3DBillboard)
 
     def resetLights(self):
+        glUseProgram(self.shader3DBillboard)
+        for i in range(8):
+            glUniform1i(glGetUniformLocation(self.shader3DBillboard,f"lights[{i}].enabled"),0)
         glUseProgram(self.shader3DTextured)
         for i in range(8):
             glUniform1i(glGetUniformLocation(self.shader3DTextured,f"lights[{i}].enabled"),0)
