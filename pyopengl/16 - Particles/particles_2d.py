@@ -1203,10 +1203,12 @@ class MenuApp:
         glDisable(GL_CULL_FACE)
         self.layer2emitter.draw()
         self.layer1emitter.draw()
+        """
         for button in self.buttons:
             button.draw()
         for line in self.textLines:
             line.draw()
+        """
         pg.display.flip()
 
         #timing
