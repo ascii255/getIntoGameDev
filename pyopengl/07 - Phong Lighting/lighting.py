@@ -201,6 +201,12 @@ class Cube:
     def draw(self):
         glUseProgram(self.shader)
         self.material.use()
+
+        #load in position
+        model_transform = pyrr.matrix44.create_identity(dtype=np.float32)
+        model_transform = pyrr.matrix44.multiply(model_transform, pyrr.matrix44.create_from_translation(vec=self.position,dtype=np.float32))
+        glUniformMatrix4fv(glGetUniformLocation(self.shader,"model"),1,GL_FALSE,model_transform)
+
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, self.vertex_count)
 
