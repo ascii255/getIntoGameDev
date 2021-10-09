@@ -1,56 +1,37 @@
-#include "config.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "model/cube.h"
 #include "model/player.h"
 #include "view/shaders.h"
-#include "view/rectangle_model.h"
 #include "view/material.h"
-
-GLFWwindow* initialize(int width, int height) {
-	glfwInit();
-
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	GLFWwindow* window = glfwCreateWindow(640, 480, "This is working I hope", NULL, NULL);
-	if (!window) {
-		std::cout << "Window creation failed\n";
-		return NULL;
-	}
-	glfwMakeContextCurrent(window);
-
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "GLAD initialization failed\n";
-		return NULL;
-	}
-
-	glViewport(0, 0, 640, 480);
-
-	return window;
-}
+#include "view/rectangle_model.h"
 
 void processInput(GLFWwindow* window, Player* player) {
 
 	int wasdState{ 0 };
 	float walk_direction{ player->eulers.z };
 	bool walking{ false };
-
+	//get wasd state
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		wasdState += 1;
 	}
-
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		wasdState += 2;
 	}
-
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		wasdState += 4;
 	}
-
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		wasdState += 8;
 	}
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, true);
+	}
 
+	//interpret wasd state
 	switch (wasdState) {
 	case 1:
 	case 11:
@@ -95,7 +76,7 @@ void processInput(GLFWwindow* window, Player* player) {
 		walking = true;
 		walk_direction += 315;
 	}
-
+	//walk
 	if (walking) {
 		player->position += 0.1f * glm::vec3{
 			glm::cos(glm::radians(walk_direction)),
@@ -104,26 +85,46 @@ void processInput(GLFWwindow* window, Player* player) {
 		};
 	}
 
+	//mouse
 	double mouse_x, mouse_y;
 	glfwGetCursorPos(window, &mouse_x, &mouse_y);
-	glfwSetCursorPos(window, static_cast<double>(640 / 2), static_cast<double>(480 / 2));
+	glfwSetCursorPos(window, 320.0, 240.0);
 
-	float delta_x{ static_cast<float>(mouse_x - static_cast<double>(640 / 2)) };
+	float delta_x{ static_cast<float>(mouse_x - 320.0) };
 	player->eulers.z -= delta_x;
 
-	float delta_y{ static_cast<float>(mouse_y - static_cast<double>(480 / 2)) };
-	player->eulers.y = std::max(std::min(player->eulers.y + delta_y, 180.0f), 0.0f);
+	float delta_y{ static_cast<float>(mouse_y - 240.0) };
+	player->eulers.y = std::max(std::min(player->eulers.y + delta_y, 179.0f), 1.0f);
+}
 
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, true);
+GLFWwindow* initialize(int width, int height) {
+	glfwInit();
+
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	GLFWwindow* window = glfwCreateWindow(width, height, "I hope this is working", NULL, NULL);
+	if (!window) {
+		std::cout << "Window creation failed\n";
+		return NULL;
 	}
+	glfwMakeContextCurrent(window);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		std::cout << "GLAD initialization failed\n";
+		return NULL;
+	}
+
+	glViewport(0, 0, width, height);
+	return window;
 }
 
 int main() {
 
 	int width = 640;
 	int height = 480;
-	float aspectRatio = (float)width / float(height);
+	float aspectRatio = (float)width / (float)height;
 	GLFWwindow* window = initialize(width, height);
 	if (!window) {
 		glfwTerminate();
@@ -132,10 +133,10 @@ int main() {
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 	unsigned int shader = util::load_shader("shaders/textured3Dvertex.txt", "shaders/textured3Dfragment.txt");
-	glUseProgram(shader);
+
+	//texture
 	glUniform1i(glGetUniformLocation(shader, "basicTexture"), 0);
 
-	//create objects
 	MaterialCreateInfo materialInfo{};
 	materialInfo.filename = "textures/wood.jpeg";
 	Material* woodTexture = new Material(&materialInfo);
@@ -153,40 +154,39 @@ int main() {
 	WoodenCube* cube = new WoodenCube(&cubeInfo);
 
 	PlayerCreateInfo playerInfo{};
-	playerInfo.eulers = { 0.0f, 0.0f, 0.0f };
-	playerInfo.position = { 0.0f, 0.0f, 1.0f };
+	playerInfo.position = { 0.0f, 0.0f, 0.0f };
+	playerInfo.eulers = { 0.0f, 90.0f, 0.0f };
 	Player* player = new Player(&playerInfo);
 
 	//set up framebuffer
-	glClearColor(0.5f, 0.1f, 0.3f, 1.0f);
+	glClearColor(0.5f, 0.2f, 0.3f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
-	glm::mat4 projection_transform = glm::perspective(45.0f, aspectRatio, 0.1f, 10.0f);
-	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, glm::value_ptr(projection_transform));
-
+	glm::mat4 projectionTransform = glm::perspective(45.0f, aspectRatio, 0.1f, 10.0f);
+	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, false, glm::value_ptr(projectionTransform));
 	while (!glfwWindowShouldClose(window)) {
 
-		//events
 		processInput(window, player);
+
 		glfwPollEvents();
 
 		//update
 		cube->update();
 		player->update(shader);
-		
+
+		//draw
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glUseProgram(shader);
+
 		cube->draw(shader);
 
 		glfwSwapBuffers(window);
-		
 	}
 
-	//free memory
 	delete cube;
-	delete woodTexture;
 	delete player;
+	delete woodTexture;
 	delete rectModel;
 	glDeleteProgram(shader);
 	glfwTerminate();
-
 	return 0;
 }

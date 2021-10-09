@@ -1,5 +1,5 @@
 #pragma once
-#include "../config.h"
+#include <glm/glm.hpp>
 
 struct PlayerCreateInfo {
 	glm::vec3 position, eulers;
@@ -8,6 +8,7 @@ struct PlayerCreateInfo {
 class Player {
 public:
 	glm::vec3 position, eulers;
+	
 	Player(PlayerCreateInfo* createInfo);
 	void update(unsigned int shader);
 };

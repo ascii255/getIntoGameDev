@@ -1,4 +1,8 @@
 #include "rectangle_model.h"
+#include <glad/glad.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 RectangleModel::RectangleModel(RectangleModelCreateInfo* createInfo) {
 	glUseProgram(createInfo->shader);
