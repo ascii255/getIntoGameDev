@@ -125,6 +125,9 @@ class App:
         self.descriptorPool = None
         self.descriptorSets = []
 
+        self.textureImage = None
+        self.textureImageMemory = None
+
         self.initWindow()
         self.initVulkan()
         self.mainLoop()
@@ -261,12 +264,22 @@ class App:
             ffi.memmove(data, pixels, len(pixels))
             vkUnmapMemory(self.device, stagingBufferMemory)
 
-            # create a vkImage object, with device local memory, send in data from
-            # staging buffer
+            self.textureImage, self.textureImageMemory = self.createImage(
+                width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
+                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            )
+
+            self.transitionImageLayout(self.textureImage, VK_FORMAT_R8G8B8A8_UNORM,
+                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+            )
+            self.copyBufferToImage(stagingBuffer, self.textureImage, width, height)
+            self.transitionImageLayout(self.textureImage, VK_FORMAT_R8G8B8A8_UNORM,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            )
 
             vkDestroyBuffer(self.device, stagingBuffer, None)
             vkFreeMemory(self.device, stagingBufferMemory, None)
-
 
 ####### Core Functionality ######################
 
@@ -323,6 +336,9 @@ class App:
 
         vkDestroyBuffer(self.device, self.vertexBuffer, None)
         vkFreeMemory(self.device, self.vertexBufferMemory, None)
+
+        vkDestroyImage(self.device, self.textureImage, None)
+        vkFreeMemory(self.device, self.textureImageMemory, None)
         
         for i in range(MAX_FRAMES_IN_FLIGHT):
             vkDestroySemaphore(self.device, self.imageAvailableSemaphores[i], None)
@@ -984,8 +1000,19 @@ class App:
 
     def copyBuffer(self, srcBuffer, dstBuffer, size):
         
+        commandBuffer = self.beginSingleTimeCommands()
+
+        copyRegion = VkBufferCopy(
+            srcOffset=0,
+            dstOffset=0,
+            size=size
+        )
+        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, copyRegion)
+
+        self.endSingleTimeCommands(commandBuffer)
+    
+    def beginSingleTimeCommands(self):
         allocInfo = VkCommandBufferAllocateInfo(
-            sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
             level=VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             commandPool=self.commandPool,
             commandBufferCount=1
@@ -1001,23 +1028,135 @@ class App:
 
         vkBeginCommandBuffer(commandBuffer, beginInfo)
 
-        copyRegion = VkBufferCopy(
-            srcOffset=0,
-            dstOffset=0,
-            size=size
-        )
-        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, copyRegion)
+        return commandBuffer
 
+    def endSingleTimeCommands(self, commandBuffer):
         vkEndCommandBuffer(commandBuffer)
 
         submitInfo = VkSubmitInfo(
             sType=VK_STRUCTURE_TYPE_SUBMIT_INFO,
             commandBufferCount=1,
-            pCommandBuffers=commandBuffers
+            pCommandBuffers=[commandBuffer,]
         )
         vkQueueSubmit(self.graphicsQueue, 1, submitInfo, VK_NULL_HANDLE)
         vkQueueWaitIdle(self.graphicsQueue)
-        vkFreeCommandBuffers(self.device, self.commandPool, 1, commandBuffers)
+        vkFreeCommandBuffers(self.device, self.commandPool, 1, [commandBuffer,])
+
+####### Images #################################
+
+    def createImage(self, width, height, format, tiling, usage, properties):
+        imageInfo = VkImageCreateInfo(
+            imageType = VK_IMAGE_TYPE_2D, extent = VkExtent3D(width, height, 1),
+            mipLevels = 1, arrayLayers = 1,
+            format = format, tiling = tiling,
+            initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            usage = usage, sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            samples = VK_SAMPLE_COUNT_1_BIT
+        )
+        image = vkCreateImage(
+            self.device, imageInfo, None
+        )
+
+        memoryRequirements = vkGetImageMemoryRequirements(self.device, image)
+        allocInfo = VkMemoryAllocateInfo(
+            allocationSize = memoryRequirements.size,
+            memoryTypeIndex = self.findMemoryType(
+                memoryRequirements.memoryTypeBits, properties
+            )
+        )
+
+        imageMemory = vkAllocateMemory(
+            self.device, allocInfo, None
+        )
+        vkBindImageMemory(self.device, image, imageMemory, 0)
+
+        return image,imageMemory
+
+    def copyBufferToImage(self, buffer, image, width, height):
+
+        commandBuffer = self.beginSingleTimeCommands()
+
+        imageSubresource = VkImageSubresourceLayers(
+            aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            mipLevel = 0,
+            baseArrayLayer = 0,
+            layerCount = 1
+        )
+
+        imageExtent = VkExtent3D(width, height, 1)
+
+        imageOffset = VkOffset3D(0, 0, 0)
+
+        region = VkBufferImageCopy(
+            bufferOffset = 0,
+            bufferRowLength = 0,
+            bufferImageHeight = 0,
+            imageSubresource = imageSubresource,
+            imageOffset = imageOffset,
+            imageExtent = imageExtent
+        )
+
+        vkCmdCopyBufferToImage(commandBuffer, buffer, image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, [region,]
+        )
+
+        self.endSingleTimeCommands(commandBuffer)
+
+    def transitionImageLayout(self, image, format, oldLayout, newLayout):
+        srcStage = 0
+        srcAccessMask = 0
+        dstStage = 0
+        dstAccessMask = 0
+
+        if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED 
+                and newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL):
+            
+            dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT
+
+            srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+            dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT
+        
+        elif (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+                and newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL):
+            
+            srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT
+            dstAccessMask = VK_ACCESS_SHADER_READ_BIT
+
+            srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT
+            dstStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
+        
+        commandBuffer = self.beginSingleTimeCommands()
+
+        subresourceRange = VkImageSubresourceRange(
+            aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            baseMipLevel = 0,
+            levelCount = 1,
+            baseArrayLayer = 0,
+            layerCount = 1
+        )
+
+        barrier = VkImageMemoryBarrier(
+            oldLayout = oldLayout,
+            newLayout = newLayout,
+            srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            image = image,
+            subresourceRange = subresourceRange,
+            srcAccessMask = srcAccessMask,
+            dstAccessMask = dstAccessMask
+        )
+
+        vkCmdPipelineBarrier(
+            commandBuffer = commandBuffer,
+            srcStageMask = srcStage,
+            dstStageMask = dstStage,
+            dependencyFlags = 0,
+            memoryBarrierCount = 0, pMemoryBarriers = None,
+            bufferMemoryBarrierCount = 0, pBufferMemoryBarriers = None,
+            imageMemoryBarrierCount = 1, pImageMemoryBarriers = barrier
+        )
+
+        self.endSingleTimeCommands(commandBuffer)
 
 ####### Drawing Commands/Synchronization ########
 
