@@ -127,6 +127,8 @@ class App:
 
         self.textureImage = None
         self.textureImageMemory = None
+        self.textureImageView = None
+        self.textureSampler = None
 
         self.initWindow()
         self.initVulkan()
@@ -158,27 +160,28 @@ class App:
         self.createFrameBuffers()
         self.createUniformBuffers()
         self.createDescriptorPool()
-        self.createDescriptorSets()
         self.createCommandPool()
         self.createTextureImage()
+        self.createDescriptorSets()
         self.createVertexBuffer()
         self.createCommandBuffers()
         self.createSyncObjects()
 
     def createVertices(self):
+        #x,y, r, g, b, u, v
         self.vertices = [
-             0.0, -0.5, 1.0, 0.0, 0.0,
-             0.5,  0.5, 0.0, 1.0, 0.0,
-            -0.5,  0.5, 0.0, 1.0, 1.0
+             0.0, -0.5, 1.0, 0.0, 0.0, 0.0, 0.0,
+             0.5,  0.5, 0.0, 1.0, 0.0, 1.0, 0.0,
+            -0.5,  0.5, 0.0, 1.0, 1.0, 1.0, 1.0
         ]
         self.vertexCount = 3
         self.vertices = np.array(self.vertices, dtype=np.float32)
         self.bindingDescription = VkVertexInputBindingDescription(
             binding=0,
-            stride=20,
+            stride=28,
             inputRate=VK_VERTEX_INPUT_RATE_VERTEX
         )
-
+        #position
         self.attributeDescriptions.append(
             VkVertexInputAttributeDescription(
                 binding=0,
@@ -187,13 +190,22 @@ class App:
                 offset=0
             )
         )
-
+        #color
         self.attributeDescriptions.append(
             VkVertexInputAttributeDescription(
                 binding=0,
                 location=1,
                 format=VK_FORMAT_R32G32B32_SFLOAT,
                 offset=8
+            )
+        )
+        #texture coordinate
+        self.attributeDescriptions.append(
+            VkVertexInputAttributeDescription(
+                binding=0,
+                location=2,
+                format=VK_FORMAT_R32G32_SFLOAT,
+                offset=20
             )
         )
 
@@ -280,6 +292,29 @@ class App:
 
             vkDestroyBuffer(self.device, stagingBuffer, None)
             vkFreeMemory(self.device, stagingBufferMemory, None)
+        self.textureImageView = self.createImageView(self.textureImage, VK_FORMAT_R8G8B8A8_UNORM)
+
+        samplerInfo = VkSamplerCreateInfo(
+            magFilter = VK_FILTER_LINEAR,
+            minFilter = VK_FILTER_NEAREST,
+            addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            anisotropyEnable = VK_TRUE,
+            maxAnisotropy = vkGetPhysicalDeviceProperties(self.physicalDevice)\
+                .limits\
+                .maxSamplerAnisotropy,
+            borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+            unnormalizedCoordinates = VK_FALSE,
+            compareEnable = VK_FALSE,
+            compareOp = VK_COMPARE_OP_ALWAYS,
+            mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+            mipLodBias = 0,
+            minLod = 0,
+            maxLod = 0
+        )
+
+        self.textureSampler = vkCreateSampler(self.device, samplerInfo, None)
 
 ####### Core Functionality ######################
 
@@ -331,6 +366,9 @@ class App:
         vkDestroySurfaceKHR = vkGetInstanceProcAddr(self.instance, "vkDestroySurfaceKHR")
         
         self.cleanupSwapchain()
+
+        vkDestroySampler(self.device, self.textureSampler, None)
+        vkDestroyImageView(self.device, self.textureImageView, None)
 
         vkDestroyDescriptorSetLayout(self.device, self.descriptorSetLayout, None)
 
@@ -437,7 +475,12 @@ class App:
             swapChainSupport = self.querySwapchainSupport(device)
             swapchainAdequate = len(swapChainSupport.formats) != 0 and len(swapChainSupport.presentModes) != 0 
 
-        return indices.complete() and extensionsSupported and swapchainAdequate
+        supportedFeatures = vkGetPhysicalDeviceFeatures(device)
+
+        return indices.complete() \
+            and extensionsSupported \
+            and swapchainAdequate \
+            and supportedFeatures.samplerAnisotropy
 
     def checkDeviceExtensionSupport(self, device):
         # vkEnumerateDeviceExtensionProperties(device, pLayerName)
@@ -501,7 +544,9 @@ class App:
             layerCount = 0
             enabledLayerNames = None
         
-        deviceFeatures = VkPhysicalDeviceFeatures()
+        deviceFeatures = VkPhysicalDeviceFeatures(
+            samplerAnisotropy=VK_TRUE
+        )
 
         deviceCreateInfo = VkDeviceCreateInfo(
             sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -656,18 +701,7 @@ class App:
     def createImageViews(self):
         #configure an image view for each image on the swapchain.
         for swapchainImage in self.swapchainImages:
-            createInfo = VkImageViewCreateInfo(
-                sType=VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-                image=swapchainImage,
-                viewType=VK_IMAGE_VIEW_TYPE_2D,
-                format=self.swapchainImageFormat,
-                components=VkComponentMapping(r=VK_COMPONENT_SWIZZLE_IDENTITY, g=VK_COMPONENT_SWIZZLE_IDENTITY,
-                                            b=VK_COMPONENT_SWIZZLE_IDENTITY, a=VK_COMPONENT_SWIZZLE_IDENTITY),
-                subresourceRange=VkImageSubresourceRange(aspectMask=VK_IMAGE_ASPECT_COLOR_BIT,
-                                                        baseMipLevel=0, levelCount=1,
-                                                        baseArrayLayer=0, layerCount=1)
-            )
-            self.swapchainImageViews.append(vkCreateImageView(self.device,createInfo,None))
+            self.swapchainImageViews.append(self.createImageView(swapchainImage, self.swapchainImageFormat))
 
     def createRenderPass(self):
         #specify the format for the color buffer
@@ -726,10 +760,19 @@ class App:
             stageFlags=VK_SHADER_STAGE_VERTEX_BIT
         )
 
+        samplerLayoutBinding = VkDescriptorSetLayoutBinding(
+            binding=1,
+            descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            descriptorCount=1,
+            stageFlags=VK_SHADER_STAGE_FRAGMENT_BIT
+        )
+
+        layoutBindings = [uboLayoutBinding, samplerLayoutBinding]
+
         layoutInfo = VkDescriptorSetLayoutCreateInfo(
             sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            bindingCount=1,
-            pBindings=uboLayoutBinding
+            bindingCount=len(layoutBindings),
+            pBindings=layoutBindings
         )
 
         self.descriptorSetLayout = vkCreateDescriptorSetLayout(self.device, layoutInfo, None)
@@ -742,12 +785,12 @@ class App:
             sType=VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
             vertexBindingDescriptionCount=1,
             pVertexBindingDescriptions=self.bindingDescription,
-            vertexAttributeDescriptionCount=2,
+            vertexAttributeDescriptionCount=len(self.attributeDescriptions),
             pVertexAttributeDescriptions=self.attributeDescriptions
         )
 
         #vertex shader transforms vertices appropriately
-        vertexShaderModule = self.createShaderModule("shaders/vert3.spv")
+        vertexShaderModule = self.createShaderModule("shaders/vert4.spv")
         vertexShaderStageInfo = VkPipelineShaderStageCreateInfo(
             sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             stage=VK_SHADER_STAGE_VERTEX_BIT,
@@ -809,7 +852,7 @@ class App:
 
         #fragment shader takes fragments from the rasterizer and colours them
         #appropriately
-        fragmentShaderModule = self.createShaderModule("shaders/frag.spv")
+        fragmentShaderModule = self.createShaderModule("shaders/frag2.spv")
         fragmentShaderStageInfo = VkPipelineShaderStageCreateInfo(
             sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             stage=VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -875,15 +918,23 @@ class App:
             return vkCreateShaderModule(self.device, createInfo, None)
 
     def createDescriptorPool(self):
-        poolSize = VkDescriptorPoolSize(
+
+        poolSizes = []
+        #ubo
+        poolSizes.append(VkDescriptorPoolSize(
             type=VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             descriptorCount=len(self.swapchainImages)
-        )
+        ))
+        #sampler
+        poolSizes.append(VkDescriptorPoolSize(
+            type=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            descriptorCount=len(self.swapchainImages)
+        ))
 
         poolInfo = VkDescriptorPoolCreateInfo(
             sType=VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-            poolSizeCount=1,
-            pPoolSizes=poolSize,
+            poolSizeCount=len(poolSizes),
+            pPoolSizes=poolSizes,
             maxSets=len(self.swapchainImages)
         )
 
@@ -909,17 +960,33 @@ class App:
                 range=3 * 4 * 4 * 4 #no of bytes covered by descriptor (size of ubo)
             )
 
-            descriptorWrite = VkWriteDescriptorSet(
-                sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            imageInfo = VkDescriptorImageInfo(
+                imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                imageView = self.textureImageView,
+                sampler = self.textureSampler
+            )
+
+            descriptorWrites = []
+            #ubo
+            descriptorWrites.append(VkWriteDescriptorSet(
                 dstSet=self.descriptorSets[i],
                 dstBinding=0,
                 dstArrayElement=0,
                 descriptorType=VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 descriptorCount=1,
                 pBufferInfo=bufferInfo
-            )
+            ))
+            #sampler
+            descriptorWrites.append(VkWriteDescriptorSet(
+                dstSet=self.descriptorSets[i],
+                dstBinding=1,
+                dstArrayElement=0,
+                descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                descriptorCount=1,
+                pImageInfo=imageInfo
+            ))
             #write descriptor, copy descriptor
-            vkUpdateDescriptorSets(self.device, 1, descriptorWrite, 0, None)
+            vkUpdateDescriptorSets(self.device, len(descriptorWrites), descriptorWrites, 0, None)
 
 ####### Buffers #################################
 
@@ -1157,6 +1224,23 @@ class App:
         )
 
         self.endSingleTimeCommands(commandBuffer)
+
+    def createImageView(self, image, format):
+        subresourceRange = VkImageSubresourceRange(
+            aspectMask=VK_IMAGE_ASPECT_COLOR_BIT,
+            baseArrayLayer=0,
+            baseMipLevel=0,
+            levelCount=1,
+            layerCount=1
+        )
+        viewInfo = VkImageViewCreateInfo(
+            image=image,
+            viewType=VK_IMAGE_VIEW_TYPE_2D,
+            format=format,
+            subresourceRange=subresourceRange
+        )
+
+        return vkCreateImageView(self.device, viewInfo, None)
 
 ####### Drawing Commands/Synchronization ########
 
