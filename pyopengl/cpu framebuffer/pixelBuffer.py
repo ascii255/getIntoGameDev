@@ -119,7 +119,15 @@ class Engine:
         self.colorBufferData |= ((0 << 24) + (255 << 16) + (0 << 8) + 255)
     
     def setPixel(self, x, y, r, g, b):
-        self.colorBufferData[y + x * self.screenHeight] = (r + (g << 16) + (b << 8) + 255)
+        """
+            32 bits:
+            RRRRRRRR BBBBBBBB GGGGGGGG AAAAAAAA
+            00000000 00000000 00000000 RRRRRRRR: 0-255
+            shift 24 bits to the left: RRRRRRRR 00000000 00000000 00000000
+            00000000 00000000 00000000 BBBBBBBB: 0-255
+            shift 16 bits to the left: 00000000 BBBBBBBB 00000000 00000000
+        """
+        self.colorBufferData[y + x * self.screenHeight] = (r<<24 + (g << 16) + (b << 8) + 255)
     
     def drawVerticalLine(self, x, height, r, g, b):
         lineHeight = min(int(height), self.screenHeight//2)
