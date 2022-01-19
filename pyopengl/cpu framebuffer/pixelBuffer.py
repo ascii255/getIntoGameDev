@@ -153,6 +153,10 @@ class App:
         pg.init()
         self.screenWidth = 320
         self.screenHeight = 240
+        pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
+        pg.display.gl_set_attribute(pg.GL_CONTEXT_MINOR_VERSION, 3)
+        pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK,
+                                    pg.GL_CONTEXT_PROFILE_CORE)
         pg.display.set_mode((self.screenWidth, self.screenHeight), pg.OPENGL|pg.DOUBLEBUF)
         self.clock = pg.time.Clock()
         self.graphicsEngine = Engine(self.screenWidth, self.screenHeight)

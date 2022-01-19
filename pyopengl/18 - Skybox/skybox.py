@@ -120,6 +120,10 @@ FONT_TEX_COORDS = {
 
 def initialise_pygame():
     pg.init()
+    pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
+    pg.display.gl_set_attribute(pg.GL_CONTEXT_MINOR_VERSION, 3)
+    pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK,
+                                pg.GL_CONTEXT_PROFILE_CORE)
     pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pg.OPENGL|pg.DOUBLEBUF)
     pg.mouse.set_pos((SCREEN_HEIGHT / 2, SCREEN_HEIGHT / 2))
 
