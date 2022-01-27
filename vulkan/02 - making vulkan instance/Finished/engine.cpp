@@ -47,6 +47,14 @@ Engine::~Engine() {
 		std::cout << "Goodbye see you!\n";
 	}
 
+	/*
+	* from vulkan_funcs.hpp:
+	* 
+	* void Instance::destroy( Optional<const VULKAN_HPP_NAMESPACE::AllocationCallbacks> allocator = nullptr,
+                                            Dispatch const & d = ::vk::getDispatchLoaderStatic())
+	*/
+	instance.destroy();
+
 	//terminate glfw
 	glfwTerminate();
 }

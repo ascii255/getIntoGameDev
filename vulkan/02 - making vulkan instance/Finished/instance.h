@@ -110,7 +110,15 @@ namespace vkInit {
 
 
 		try {
-			return vk::createInstance(createInfo, nullptr);
+			/*
+			* from vulkan_funcs.h:
+			* 
+			* createInstance( const VULKAN_HPP_NAMESPACE::InstanceCreateInfo &          createInfo,
+                    Optional<const VULKAN_HPP_NAMESPACE::AllocationCallbacks> allocator = nullptr,
+                    Dispatch const &                                          d = ::vk::getDispatchLoaderStatic())
+				
+			*/
+			return vk::createInstance(createInfo);
 		}
 		catch (vk::SystemError err) {
 			if (debug) {
