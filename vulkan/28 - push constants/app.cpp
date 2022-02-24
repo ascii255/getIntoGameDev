@@ -1,4 +1,3 @@
-#pragma once
 #include "app.h"
 #include <GLFW/glfw3.h>
 

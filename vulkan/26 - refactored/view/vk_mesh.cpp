@@ -1,6 +1,6 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "vk_mesh.h"
-#include "../tiny_obj_loader.h"
+#include "tiny_obj_loader.h"
 
 bool Mesh::loadModel(const char* filename) {
 	tinyobj::attrib_t attributes;

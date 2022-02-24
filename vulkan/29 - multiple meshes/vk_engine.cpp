@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <fstream>
 #include <chrono>
-#include "view/vk_textues.h"
+#include "view/vk_textures.h"
 #include "view/vk_mesh.h"
 #include <sstream>
 
@@ -1518,7 +1518,7 @@ void VulkanEngine::cleanupSwapchain() {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
 
-	vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	//vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 
 	vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);

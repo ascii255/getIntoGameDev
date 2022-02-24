@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <fstream>
 #include <chrono>
-#include "view/vk_textues.h"
+#include "view/vk_textures.h"
 #include "view/vk_mesh.h"
 #include <sstream>
 

@@ -669,7 +669,9 @@ private:
 	}
 	/*------------------- cleanup --------------------*/
 	void cleanup() {
-
+        
+        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        
 		for (VkImageView imageView : swapchainImageViews) {
 			vkDestroyImageView(device, imageView, nullptr);
 		}
